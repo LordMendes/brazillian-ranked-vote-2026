@@ -16,7 +16,7 @@ Enquete cívica **não oficial** com voto ranqueado (IRV), autenticação por e-
 
 - Next.js (App Router, TypeScript, `output: "standalone"`)
 - PostgreSQL 16 + Prisma
-- Resend (envio do link de acesso)
+- Resend em produção; MailHog no `npm run dev`
 - `@hello-pangea/dnd` + botões sobe/desce
 - `geoip-lite` (lookup offline)
 
@@ -27,6 +27,7 @@ cp .env.example .env
 # Ajuste SERVER_SECRET (32+ chars). Localmente o Postgres do compose usa a porta 15432.
 
 docker compose up -d postgres
+docker compose --profile dev up -d mailhog
 npm install
 npx prisma migrate deploy
 npm run dev
@@ -34,7 +35,9 @@ npm run dev
 
 Com `ALLOW_NON_BR=true` (padrão no `.env.example`), a checagem de país é ignorada.
 
-**E-mail:** o link de acesso sai pela API do Resend (`RESEND_API_KEY`). O remetente é `RESEND_FROM` (`acesso@tortrad.com.br`), em um domínio verificado na Resend. Sem `RESEND_API_KEY`, o link só é impresso no console.
+**E-mail local:** o `npm run dev` entrega o link no MailHog (`SMTP_HOST` / `SMTP_PORT`, padrão `127.0.0.1:1025`). A caixa fica em http://localhost:8025. Se essas portas já estiverem ocupadas, use o mesmo número em `SMTP_PORT`, `MAILHOG_SMTP_PORT` e `MAILHOG_UI_PORT`. A chave da Resend não é usada nesse modo.
+
+**E-mail em produção:** o link sai pela API do Resend (`RESEND_API_KEY`). O remetente é `RESEND_FROM` (`acesso@tortrad.com.br`), em um domínio verificado na Resend.
 
 ```bash
 npm test
@@ -53,7 +56,7 @@ Variáveis obrigatórias:
 | `APP_URL` | URL pública (ex.: `https://enquete.seudominio.com`) |
 | `TRUST_PROXY` | `true` no Coolify (Traefik) |
 
-Obrigatório para enviar e-mail: `RESEND_API_KEY`. Opcional: `RESEND_FROM` (domínio verificado), `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção).
+Obrigatório para enviar e-mail: `RESEND_API_KEY`. Opcional: `RESEND_FROM` (domínio verificado), `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção). O MailHog fica no profile `dev` e não sobe com o deploy.
 
 Se o Coolify já gerencia o Postgres, aponte `DATABASE_URL` para ele e pode publicar só o serviço `app` (ou use o compose completo).
 

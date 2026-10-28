@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { CANDIDATE_BY_ID } from "@/lib/candidates";
+import { CandidateMark } from "@/components/CandidateMark";
 import { MigrationReport } from "@/components/MigrationReport";
 import { runIrv, type Ballot } from "@/lib/irv";
 
@@ -51,11 +52,14 @@ export default async function ResultadoPage() {
           {result.totalBallots}
         </p>
         {winner ? (
-          <p className="mt-4 text-sm text-zinc-700 dark:text-zinc-300">
-            Vencedor IRV:{" "}
-            <strong>
-              {winner.nomeUrna} ({winner.numero})
-            </strong>
+          <p className="mt-4 flex items-center justify-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <CandidateMark candidate={winner} size="sm" />
+            <span>
+              Vencedor IRV:{" "}
+              <strong>
+                {winner.nomeUrna} ({winner.numero})
+              </strong>
+            </span>
           </p>
         ) : (
           <p className="mt-4 text-sm text-zinc-500">
@@ -94,11 +98,14 @@ export default async function ResultadoPage() {
                     : "0.0";
                 return (
                   <li key={s.candidateId} className="text-sm">
-                    <div className="mb-1 flex justify-between gap-2">
-                      <span className="font-medium text-zinc-800 dark:text-zinc-100">
-                        {c?.nomeUrna ?? s.candidateId}{" "}
-                        <span className="font-normal text-zinc-500">
-                          ({c?.numero})
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2 font-medium text-zinc-800 dark:text-zinc-100">
+                        {c && <CandidateMark candidate={c} size="sm" />}
+                        <span className="truncate">
+                          {c?.nomeUrna ?? s.candidateId}{" "}
+                          <span className="font-normal text-zinc-500">
+                            ({c?.numero})
+                          </span>
                         </span>
                       </span>
                       <span className="tabular-nums text-zinc-600 dark:text-zinc-400">

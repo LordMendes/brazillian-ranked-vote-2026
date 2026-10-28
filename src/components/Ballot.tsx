@@ -8,6 +8,7 @@ import {
   DropResult,
 } from "@hello-pangea/dnd";
 import type { Candidate } from "@/lib/candidates";
+import { CandidateMark } from "@/components/CandidateMark";
 import { firstRoundOptions, secondRoundOptions } from "@/lib/official-vote";
 import { useRouter } from "next/navigation";
 
@@ -278,8 +279,8 @@ function ListColumn({
   onMoveDown?: (index: number) => void;
 }) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+    <section className="flex h-full flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+      <h2 className="mb-3 shrink-0 text-sm font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </h2>
       <Droppable droppableId={droppableId}>
@@ -287,7 +288,7 @@ function ListColumn({
           <ul
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`min-h-40 space-y-2 rounded-xl p-1 transition ${
+            className={`flex min-h-40 flex-1 flex-col gap-2 rounded-xl p-1 transition ${
               snapshot.isDraggingOver ? "bg-emerald-50 dark:bg-emerald-950/40" : ""
             }`}
           >
@@ -310,8 +311,9 @@ function ListColumn({
                         {index + 1}
                       </span>
                     )}
+                    <CandidateMark candidate={c} />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      <div className="text-sm font-medium leading-snug text-zinc-900 dark:text-zinc-50">
                         {c.nomeUrna}
                       </div>
                       <div className="text-xs text-zinc-500">

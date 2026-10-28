@@ -6,6 +6,10 @@ export function SiteFooter() {
         desvinculado do e-mail
       </p>
       <p className="mt-2">
+        Fotos de urna: TSE (CC BY). O logotipo identifica a legenda e não é
+        endosso.
+      </p>
+      <p className="mt-2">
         <a
           href="https://github.com/LordMendes/brazillian-ranked-vote-2026"
           target="_blank"

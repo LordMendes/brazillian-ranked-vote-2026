@@ -107,11 +107,11 @@ export async function POST(request: Request) {
       err instanceof Error && err.cause && typeof err.cause === "object"
         ? (err.cause as { name?: string }).name
         : undefined;
-    if (process.env.NODE_ENV !== "production" && cause === "validation_error") {
+    if (process.env.NODE_ENV !== "production" && cause === "mailhog_unavailable") {
       return NextResponse.json(
         {
           error:
-            "A Resend recusou o envio. Confirme se o domínio de RESEND_FROM está verificado.",
+            `O MailHog não aceitou o e-mail. Confirme se o serviço está no ar (http://localhost:${process.env.MAILHOG_UI_PORT || "8025"}).`,
         },
         { status: 502 },
       );

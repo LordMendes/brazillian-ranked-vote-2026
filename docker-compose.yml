@@ -1,4 +1,13 @@
 services:
+  # Local inbox only. Profile "dev" keeps this off a Coolify deploy.
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    profiles: ["dev"]
+    restart: unless-stopped
+    ports:
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
