@@ -1,0 +1,31 @@
+// use prisma-8
+
+model ParticipanteVerificado {
+  id              Uuid               @id @onCreate(uuid())
+  emailHash       String             @map("email_hash")
+  dataVerificacao TimestampString(3) @default(now()) @map("data_verificacao")
+
+  @@index([emailHash], unique: true, map: "participantes_verificados_email_hash_key")
+  @@map("participantes_verificados")
+}
+
+model VotoComputado {
+  id                Uuid               @id @onCreate(uuid())
+  ranking           Jsonb
+  dataSubmissao     TimestampString(3) @map("data_submissao")
+  votoPrimeiroTurno String?            @map("voto_primeiro_turno")
+  votoSegundoTurno  String?            @map("voto_segundo_turno")
+
+  @@map("votos_computados")
+}
+
+model AcessoPendente {
+  id             Uuid               @id @onCreate(uuid())
+  tokenHash      String             @map("token_hash")
+  emailEncrypted String             @map("email_encrypted")
+  expiresAt      TimestampString(3) @map("expires_at")
+  createdAt      TimestampString(3) @default(now()) @map("created_at")
+
+  @@index([tokenHash], unique: true, map: "acessos_pendentes_token_hash_key")
+  @@map("acessos_pendentes")
+}

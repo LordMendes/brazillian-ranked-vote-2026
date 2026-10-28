@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { db, toTimestamp } from "@/lib/db";
 import {
   encryptEmail,
   generateOpaqueToken,
@@ -64,10 +64,9 @@ export async function POST(request: Request) {
     // Participation is recorded only when the ballot is stored. A used or
     // expired link, with no vote, does not block another request.
     const emailHash = hashEmail(email);
-    const already = await prisma.participanteVerificado.findUnique({
-      where: { emailHash },
-      select: { id: true },
-    });
+    const already = await db.orm.public.ParticipanteVerificado.select("id")
+      .where({ emailHash })
+      .first();
     if (already) {
       return NextResponse.json({
         ok: true,
@@ -78,14 +77,12 @@ export async function POST(request: Request) {
 
     const token = generateOpaqueToken();
     const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + 15 * 60_000);
+    const expiresAt = toTimestamp(new Date(Date.now() + 15 * 60_000));
 
-    const pending = await prisma.acessoPendente.create({
-      data: {
-        tokenHash,
-        emailEncrypted: encryptEmail(email),
-        expiresAt,
-      },
+    const pending = await db.orm.public.AcessoPendente.create({
+      tokenHash,
+      emailEncrypted: encryptEmail(email),
+      expiresAt,
     });
 
     const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -94,7 +91,9 @@ export async function POST(request: Request) {
     try {
       await sendMagicLink(email, link);
     } catch (err) {
-      await prisma.acessoPendente.delete({ where: { id: pending.id } }).catch(() => undefined);
+      await db.orm.public.AcessoPendente.where({ id: pending.id })
+        .delete()
+        .catch(() => undefined);
       throw err;
     }
 

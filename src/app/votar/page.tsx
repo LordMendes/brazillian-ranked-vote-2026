@@ -7,7 +7,7 @@ import { hasConsent } from "@/lib/consent";
 import { isVotingOpen } from "@/lib/geo";
 import { getVoteSession } from "@/lib/session";
 import { voteAccess } from "@/lib/vote-access";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { hashEmail } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +34,9 @@ export default async function VotarPage() {
     redirect("/?erro=acesso");
   }
 
-  const already = await prisma.participanteVerificado.findUnique({
-    where: { emailHash: hashEmail(session.email) },
-    select: { id: true },
-  });
+  const already = await db.orm.public.ParticipanteVerificado.select("id")
+    .where({ emailHash: hashEmail(session.email) })
+    .first();
   if (already) {
     session.destroy();
     await session.save();

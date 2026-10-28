@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db, timestampToDate } from "@/lib/db";
 import { decryptEmail, hashEmail, hashToken } from "@/lib/crypto";
 import { getVoteSession } from "@/lib/session";
 import { isBrazilAccessAllowed, isVotingOpen } from "@/lib/geo";
@@ -24,13 +24,11 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   const tokenHash = hashToken(token);
-  const pending = await prisma.acessoPendente.findUnique({
-    where: { tokenHash },
-  });
+  const pending = await db.orm.public.AcessoPendente.where({ tokenHash }).first();
 
-  if (!pending || pending.expiresAt.getTime() < Date.now()) {
+  if (!pending || timestampToDate(pending.expiresAt).getTime() < Date.now()) {
     if (pending) {
-      await prisma.acessoPendente.delete({ where: { id: pending.id } }).catch(() => {});
+      await db.orm.public.AcessoPendente.where({ id: pending.id }).delete().catch(() => {});
     }
     return NextResponse.redirect(`${appUrl}/?erro=expirado`);
   }
@@ -39,18 +37,17 @@ export async function GET(request: Request, { params }: Params) {
   try {
     email = decryptEmail(pending.emailEncrypted);
   } catch {
-    await prisma.acessoPendente.delete({ where: { id: pending.id } }).catch(() => {});
+    await db.orm.public.AcessoPendente.where({ id: pending.id }).delete().catch(() => {});
     return NextResponse.redirect(`${appUrl}/?erro=link`);
   }
 
   // Single-use: delete before checking participation
-  await prisma.acessoPendente.delete({ where: { id: pending.id } });
+  await db.orm.public.AcessoPendente.where({ id: pending.id }).delete();
 
   const emailHash = hashEmail(email);
-  const already = await prisma.participanteVerificado.findUnique({
-    where: { emailHash },
-    select: { id: true },
-  });
+  const already = await db.orm.public.ParticipanteVerificado.select("id")
+    .where({ emailHash })
+    .first();
 
   if (already) {
     return NextResponse.redirect(`${appUrl}/?erro=ja_participou`);

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  serverExternalPackages: ["geoip-lite", "@prisma/client", "prisma"],
+  serverExternalPackages: ["geoip-lite", "@prisma/orm-postgres", "pg"],
   turbopack: {
     root: __dirname,
     rules: {

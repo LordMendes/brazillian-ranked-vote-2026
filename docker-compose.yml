@@ -31,7 +31,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://ranked:ranked@postgres:5432/ranked_choice?schema=public
+      DATABASE_URL: postgresql://ranked:ranked@postgres:5432/ranked_choice
       SERVER_SECRET: ${SERVER_SECRET:?set SERVER_SECRET}
       APP_URL: ${APP_URL:-http://localhost:3000}
       TRUST_PROXY: ${TRUST_PROXY:-false}

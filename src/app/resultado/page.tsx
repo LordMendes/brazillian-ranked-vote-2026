@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { CANDIDATE_BY_ID } from "@/lib/candidates";
 import { CandidateMark } from "@/components/CandidateMark";
 import { MigrationReport } from "@/components/MigrationReport";
@@ -7,13 +7,11 @@ import { runIrv, type Ballot } from "@/lib/irv";
 export const dynamic = "force-dynamic";
 
 export default async function ResultadoPage() {
-  const votes = await prisma.votoComputado.findMany({
-    select: {
-      ranking: true,
-      votoPrimeiroTurno: true,
-      votoSegundoTurno: true,
-    },
-  });
+  const votes = await db.orm.public.VotoComputado.select(
+    "ranking",
+    "votoPrimeiroTurno",
+    "votoSegundoTurno",
+  ).all();
 
   const rows = votes.flatMap((vote) => {
     const ranking = vote.ranking;

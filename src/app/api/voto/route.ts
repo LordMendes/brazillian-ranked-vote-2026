@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { db, isUniqueViolation, toTimestamp } from "@/lib/db";
 import { hashEmail, hashIp, truncateToHour } from "@/lib/crypto";
 import { validateRanking } from "@/lib/candidates";
 import {
@@ -98,25 +98,17 @@ export async function POST(request: Request) {
     const emailHash = hashEmail(session.email);
 
     try {
-      await prisma.$transaction(async (tx) => {
-        await tx.participanteVerificado.create({
-          data: { emailHash },
-        });
-        await tx.votoComputado.create({
-          data: {
-            ranking,
-            dataSubmissao: truncateToHour(),
-            votoPrimeiroTurno: primeiro.value,
-            votoSegundoTurno: segundo.value,
-          },
+      await db.transaction(async (tx) => {
+        await tx.orm.public.ParticipanteVerificado.create({ emailHash });
+        await tx.orm.public.VotoComputado.create({
+          ranking,
+          dataSubmissao: toTimestamp(truncateToHour()),
+          votoPrimeiroTurno: primeiro.value,
+          votoSegundoTurno: segundo.value,
         });
       });
     } catch (err: unknown) {
-      const code =
-        err && typeof err === "object" && "code" in err
-          ? String((err as { code: unknown }).code)
-          : "";
-      if (code === "P2002") {
+      if (isUniqueViolation(err)) {
         session.destroy();
         await session.save();
         return NextResponse.json(

@@ -1,0 +1,262 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.acessos_pendentes",
+    "label": "Create table \"acessos_pendentes\"",
+    "summary": "Creates table \"acessos_pendentes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "acessos_pendentes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"acessos_pendentes\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"acessos_pendentes\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"acessos_pendentes\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"acessos_pendentes\"",
+        "sql": "CREATE TABLE \"public\".\"acessos_pendentes\" (\n  \"created_at\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"email_encrypted\" text NOT NULL,\n  \"expires_at\" timestamp(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"token_hash\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"acessos_pendentes\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"acessos_pendentes\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"acessos_pendentes\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.participantes_verificados",
+    "label": "Create table \"participantes_verificados\"",
+    "summary": "Creates table \"participantes_verificados\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "participantes_verificados"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"participantes_verificados\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"participantes_verificados\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"participantes_verificados\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"participantes_verificados\"",
+        "sql": "CREATE TABLE \"public\".\"participantes_verificados\" (\n  \"data_verificacao\" timestamp(3) DEFAULT (now()) NOT NULL,\n  \"email_hash\" text NOT NULL,\n  \"id\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"participantes_verificados\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"participantes_verificados\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"participantes_verificados\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.votos_computados",
+    "label": "Create table \"votos_computados\"",
+    "summary": "Creates table \"votos_computados\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "votos_computados"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"votos_computados\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"votos_computados\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"votos_computados\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"votos_computados\"",
+        "sql": "CREATE TABLE \"public\".\"votos_computados\" (\n  \"data_submissao\" timestamp(3) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"ranking\" jsonb NOT NULL,\n  \"voto_primeiro_turno\" text,\n  \"voto_segundo_turno\" text,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"votos_computados\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"votos_computados\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"votos_computados\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.acessos_pendentes.acessos_pendentes_token_hash_key",
+    "label": "Create index \"acessos_pendentes_token_hash_key\" on \"acessos_pendentes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "acessos_pendentes_token_hash_key",
+        "table": "acessos_pendentes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"acessos_pendentes_token_hash_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"acessos_pendentes_token_hash_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"acessos_pendentes_token_hash_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"acessos_pendentes_token_hash_key\"",
+        "sql": "CREATE UNIQUE INDEX \"acessos_pendentes_token_hash_key\" ON \"public\".\"acessos_pendentes\" (\"token_hash\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"acessos_pendentes_token_hash_key\" exists on \"acessos_pendentes\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"acessos_pendentes_token_hash_key\"",
+          "i",
+          "I",
+          "\"public\".\"acessos_pendentes\"",
+          "btree",
+          "[\"token_hash\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.participantes_verificados.participantes_verificados_email_hash_key",
+    "label": "Create index \"participantes_verificados_email_hash_key\" on \"participantes_verificados\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "participantes_verificados_email_hash_key",
+        "table": "participantes_verificados"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"participantes_verificados_email_hash_key\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"participantes_verificados_email_hash_key\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"participantes_verificados_email_hash_key\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"participantes_verificados_email_hash_key\"",
+        "sql": "CREATE UNIQUE INDEX \"participantes_verificados_email_hash_key\" ON \"public\".\"participantes_verificados\" (\"email_hash\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"participantes_verificados_email_hash_key\" exists on \"participantes_verificados\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND \"i\".\"indisunique\" AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"participantes_verificados_email_hash_key\"",
+          "i",
+          "I",
+          "\"public\".\"participantes_verificados\"",
+          "btree",
+          "[\"email_hash\"]"
+        ]
+      }
+    ]
+  }
+]
