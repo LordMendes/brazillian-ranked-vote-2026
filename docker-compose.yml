@@ -29,7 +29,7 @@ services:
       ALLOW_NON_BR: ${ALLOW_NON_BR:-}
       VOTING_CLOSES_AT: ${VOTING_CLOSES_AT:-}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM: ${RESEND_FROM:-Enquete Ranqueada <onboarding@resend.dev>}
+      RESEND_FROM: ${RESEND_FROM:-Enquete Ranqueada <acesso@tortrad.com.br>}
     depends_on:
       postgres:
         condition: service_healthy

@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + 15 * 60_000);
 
-    await prisma.acessoPendente.create({
+    const pending = await prisma.acessoPendente.create({
       data: {
         tokenHash,
         emailEncrypted: encryptEmail(email),
@@ -89,7 +89,12 @@ export async function POST(request: Request) {
     const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
     const link = `${appUrl}/acesso/${token}`;
 
-    await sendMagicLink(email, link);
+    try {
+      await sendMagicLink(email, link);
+    } catch (err) {
+      await prisma.acessoPendente.delete({ where: { id: pending.id } }).catch(() => undefined);
+      throw err;
+    }
 
     return NextResponse.json({
       ok: true,
@@ -97,7 +102,20 @@ export async function POST(request: Request) {
       message:
         "Se o e-mail for válido, enviamos um link de acesso. Verifique sua caixa de entrada.",
     });
-  } catch {
+  } catch (err) {
+    const cause =
+      err instanceof Error && err.cause && typeof err.cause === "object"
+        ? (err.cause as { name?: string }).name
+        : undefined;
+    if (process.env.NODE_ENV !== "production" && cause === "validation_error") {
+      return NextResponse.json(
+        {
+          error:
+            "A Resend recusou o envio. Confirme se o domínio de RESEND_FROM está verificado.",
+        },
+        { status: 502 },
+      );
+    }
     return NextResponse.json(
       { error: "Não foi possível processar a solicitação." },
       { status: 500 },

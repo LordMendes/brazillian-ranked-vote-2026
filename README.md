@@ -34,7 +34,7 @@ npm run dev
 
 Com `ALLOW_NON_BR=true` (padrão no `.env.example`), a checagem de país é ignorada.
 
-**E-mail:** o link de acesso sai pela API do Resend (`RESEND_API_KEY`). O remetente padrão é `onboarding@resend.dev`, que só entrega no e-mail da conta Resend. Para os demais destinatários, verifique um domínio e defina `RESEND_FROM`. Sem `RESEND_API_KEY`, o link só é impresso no console.
+**E-mail:** o link de acesso sai pela API do Resend (`RESEND_API_KEY`). O remetente é `RESEND_FROM` (`acesso@tortrad.com.br`), em um domínio verificado na Resend. Sem `RESEND_API_KEY`, o link só é impresso no console.
 
 ```bash
 npm test

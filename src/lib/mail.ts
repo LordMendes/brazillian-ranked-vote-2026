@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const DEFAULT_FROM = "Enquete Ranqueada <onboarding@resend.dev>";
+const DEFAULT_FROM = "Enquete Ranqueada <acesso@tortrad.com.br>";
 
 export async function sendMagicLink(to: string, link: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -41,6 +41,8 @@ export async function sendMagicLink(to: string, link: string): Promise<void> {
 
   if (error) {
     console.error("[mail] resend rejected the message", error.name);
-    throw new Error("Failed to send magic link");
+    const failure = new Error("Failed to send magic link");
+    failure.cause = { name: error.name };
+    throw failure;
   }
 }
