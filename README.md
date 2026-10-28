@@ -16,7 +16,7 @@ Enquete cívica **não oficial** com voto ranqueado (IRV), autenticação por e-
 
 - Next.js (App Router, TypeScript, `output: "standalone"`)
 - PostgreSQL 16 + Prisma
-- Nodemailer (SMTP)
+- Resend (envio do link de acesso)
 - `@hello-pangea/dnd` + botões sobe/desce
 - `geoip-lite` (lookup offline)
 
@@ -26,7 +26,7 @@ Enquete cívica **não oficial** com voto ranqueado (IRV), autenticação por e-
 cp .env.example .env
 # Ajuste SERVER_SECRET (32+ chars). Localmente o Postgres do compose usa a porta 15432.
 
-docker compose up -d postgres mailhog
+docker compose up -d postgres
 npm install
 npx prisma migrate deploy
 npm run dev
@@ -34,7 +34,7 @@ npm run dev
 
 Com `ALLOW_NON_BR=true` (padrão no `.env.example`), a checagem de país é ignorada.
 
-**E-mail local:** MailHog captura os magic links. Abra a UI em [http://localhost:18025](http://localhost:18025). SMTP no host: `localhost:11025` (já no `.env.example`). No serviço `app` do Compose, o host interno continua `mailhog:1025`. Sem `SMTP_HOST`, o link só é impresso no console.
+**E-mail:** o link de acesso sai pela API do Resend (`RESEND_API_KEY`). O remetente padrão é `onboarding@resend.dev`, que só entrega no e-mail da conta Resend. Para os demais destinatários, verifique um domínio e defina `RESEND_FROM`. Sem `RESEND_API_KEY`, o link só é impresso no console.
 
 ```bash
 npm test
@@ -53,7 +53,7 @@ Variáveis obrigatórias:
 | `APP_URL` | URL pública (ex.: `https://enquete.seudominio.com`) |
 | `TRUST_PROXY` | `true` no Coolify (Traefik) |
 
-Opcionais: `SMTP_*`, `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção).
+Obrigatório para enviar e-mail: `RESEND_API_KEY`. Opcional: `RESEND_FROM` (domínio verificado), `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção).
 
 Se o Coolify já gerencia o Postgres, aponte `DATABASE_URL` para ele e pode publicar só o serviço `app` (ou use o compose completo).
 

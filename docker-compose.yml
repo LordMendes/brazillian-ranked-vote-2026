@@ -16,14 +16,6 @@ services:
       timeout: 5s
       retries: 10
 
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    restart: unless-stopped
-    ports:
-      # Host ports avoid clash with other local MailHog instances on 1025/8025
-      - "11025:1025"
-      - "18025:8025"
-
   app:
     build: .
     restart: unless-stopped
@@ -36,16 +28,11 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-false}
       ALLOW_NON_BR: ${ALLOW_NON_BR:-}
       VOTING_CLOSES_AT: ${VOTING_CLOSES_AT:-}
-      SMTP_HOST: ${SMTP_HOST:-mailhog}
-      SMTP_PORT: ${SMTP_PORT:-1025}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      SMTP_FROM: ${SMTP_FROM:-Enquete Ranqueada <noreply@ranked.local>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Enquete Ranqueada <onboarding@resend.dev>}
     depends_on:
       postgres:
         condition: service_healthy
-      mailhog:
-        condition: service_started
 
 volumes:
   postgres_data:

@@ -169,13 +169,21 @@ export function Landing() {
           oficial do 1º e do 2º turno são gravados sem esse vínculo. O
           resultado público mostra apenas totais.
         </p>
-        <p className="text-sm">
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           <Link
             href="/resultado"
             className="font-semibold text-emerald-700 underline dark:text-emerald-400"
           >
             Ver o resultado agregado
           </Link>
+          <a
+            href="https://github.com/LordMendes/brazillian-ranked-vote-2026"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-emerald-700 underline dark:text-emerald-400"
+          >
+            Código-fonte no GitHub
+          </a>
         </p>
       </section>
     </div>
