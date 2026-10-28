@@ -1,80 +1,61 @@
 # Enquete de voto ranqueado — Presidência 2026
 
-Enquete cívica **não oficial** com voto ranqueado (IRV), autenticação por e-mail via magic link, unicidade por HMAC-SHA256 e voto anônimo desvinculado. Pronto para Docker Compose e Coolify.
+Enquete cívica **não oficial**. Não é a urna do TSE, não apura a eleição oficial e não substitui o voto depositado na urna eletrônica.
 
-## Privacidade
+O 1º turno oficial de 2026 teve 13 candidaturas. O 2º turno oficial foi entre Lula (13) e Flávio Bolsonaro (22). Quem não votou em um desses dois precisou escolher de novo, ou o voto do 1º turno não seguiu para a decisão final.
 
-- Tabela `participantes_verificados`: só o hash HMAC do e-mail (nunca o texto).
-- Tabela `votos_computados`: ranking (JSON), voto oficial autodeclarado do 1º e do 2º turno (opcional) e timestamp truncado à hora, com UUID aleatório.
-- Sem FK entre as duas tabelas.
-- Link mágico opaco (`/acesso/<token>`); o e-mail fica criptografado só enquanto o link é válido (15 min, uso único).
-- Corpo do voto: `{ ranking: string[], votoPrimeiroTurno?: string | null, votoSegundoTurno?: string | null }` — o e-mail fica na sessão httpOnly criptografada. O voto oficial é opcional (`branco`, `nulo`, `nao-votei`, id de candidato do 1º turno, ou `lula` / `flavio-bolsonaro` no 2º) e não entra na conta IRV. Serve para o agregado de migração.
-- IP usado só para checar país (BR), **não armazenado**.
-- Logs: não registre bodies, e-mails, tokens ou IPs. No Coolify/Traefik, desative log de request body e URLs completas com query/path sensível.
+Aqui o campo é o mesmo do 1º turno, mas uma única ordem substitui os turnos. A apuração elimina e transfere até alguém ter maioria. O método é o segundo turno instantâneo (instant-runoff voting, IRV).
 
-## Stack
+## Como a conta funciona
 
-- Next.js (App Router, TypeScript, `output: "standalone"`)
-- PostgreSQL 16 + Prisma
-- Resend em produção; MailHog no `npm run dev`
-- `@hello-pangea/dnd` + botões sobe/desce
-- `geoip-lite` (lookup offline)
+Cada cédula é uma ordem de preferência. Não é obrigatório ordenar os 13 nomes: entra só quem a pessoa incluir.
 
-## Desenvolvimento local
+1. O voto conta para a primeira preferência que ainda está na disputa.
+2. Se alguém passa de metade das cédulas ainda ativas, essa pessoa vence. A maioria é metade mais um, não o primeiro lugar simples.
+3. Sem maioria, sai quem tem menos votos na rodada.
+4. A cédula de quem saiu passa para a próxima preferência que ainda disputa. Quem ficou de fora da ordem nunca recebe esse voto.
+5. Se a lista acaba antes do fim, a cédula se esgota e deixa de entrar no cálculo da maioria.
 
-```bash
-cp .env.example .env
-# Ajuste SERVER_SECRET (32+ chars). Localmente o Postgres do compose usa a porta 15432.
+Empate na eliminação: menos votos na rodada, depois menos primeiras preferências no total, depois o número de urna maior.
 
-docker compose up -d postgres
-docker compose --profile dev up -d mailhog
-npm install
-npx prisma migrate deploy
-npm run dev
-```
+## O que a cédula pede
 
-Com `ALLOW_NON_BR=true` (padrão no `.env.example`), a checagem de país é ignorada.
+- **Ordem ranqueada** — define o vencedor da enquete.
+- **Voto oficial do 1º turno** e **do 2º turno** — opcionais e autodeclarados. Não entram na conta IRV. Servem só para o agregado de migração: cruzar o voto declarado na eleição oficial com a 1ª preferência desta enquete.
 
-**E-mail local:** o `npm run dev` entrega o link no MailHog (`SMTP_HOST` / `SMTP_PORT`, padrão `127.0.0.1:1025`). A caixa fica em http://localhost:8025. Se essas portas já estiverem ocupadas, use o mesmo número em `SMTP_PORT`, `MAILHOG_SMTP_PORT` e `MAILHOG_UI_PORT`. A chave da Resend não é usada nesse modo.
+Respostas aceitas no voto oficial: candidato do campo correspondente, `branco`, `nulo` ou `nao-votei`. No 2º turno, os candidatos são só Lula e Flávio Bolsonaro. Deixar em branco significa que a pessoa não respondeu.
 
-**E-mail em produção:** o link sai pela API do Resend (`RESEND_API_KEY`). O remetente é `RESEND_FROM` (`acesso@tortrad.com.br`), em um domínio verificado na Resend.
+## Quem participa
 
-```bash
-npm test
-```
+O acesso à cédula exige um link enviado por e-mail. O link vale 15 minutos e é de uso único. A sessão depois do link dura 30 minutos. Se a sessão acabar antes do envio, o mesmo e-mail pode pedir outro link. O endereço só fica impedido de votar de novo depois que o voto é gravado.
 
-## Docker / Coolify
+A unicidade é por endereço, não por título de eleitor. O sistema não confirma que a pessoa votou na eleição oficial nem que o e-mail pertence a um eleitor. Aliases com `+` são ignorados; no Gmail, pontos no nome e o domínio `googlemail.com` contam como o mesmo endereço.
 
-Deploy type: **Docker Compose**.
+Em produção, a página só abre para acessos cujo IP o lookup offline classifica como Brasil. O IP não é gravado com o voto. Há limite de tentativas por IP e por e-mail para reduzir abuso; esse controle fica em memória do processo e expira.
 
-Variáveis obrigatórias:
+## O que fica gravado
 
-| Variável | Descrição |
-| --- | --- |
-| `DATABASE_URL` | Postgres |
-| `SERVER_SECRET` | ≥ 32 caracteres (HMAC, criptografia, sessão) |
-| `APP_URL` | URL pública (ex.: `https://enquete.seudominio.com`) |
-| `TRUST_PROXY` | `true` no Coolify (Traefik) |
+Três tabelas, sem chave estrangeira entre participação e cédula.
 
-Obrigatório para enviar e-mail: `RESEND_API_KEY`. Opcional: `RESEND_FROM` (domínio verificado), `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção). O MailHog fica no profile `dev` e não sobe com o deploy.
+| Tabela | O que guarda | Por quanto tempo |
+| --- | --- | --- |
+| `acessos_pendentes` | Hash do link e o e-mail criptografado (AES-256-GCM), só para entregar a sessão | Até o link ser usado ou expirar (15 min); a linha é apagada |
+| `participantes_verificados` | HMAC-SHA256 do e-mail canônico e o instante da participação | Enquanto a enquete existir |
+| `votos_computados` | Ranking, voto oficial opcional do 1º e do 2º turno, UUID aleatório e horário truncado à hora (UTC) | Enquanto a enquete existir |
 
-Se o Coolify já gerencia o Postgres, aponte `DATABASE_URL` para ele e pode publicar só o serviço `app` (ou use o compose completo).
+O texto do e-mail não entra na cédula. Durante a sessão ele fica só no cookie `enquete_sessao` (httpOnly, criptografado, 30 minutos). O cookie `enquete_consentimento` registra que a pessoa aceitou este aviso; não identifica o voto.
 
-```bash
-docker compose up --build
-```
+O resultado público (`/resultado`) mostra totais: cédulas, rodadas do IRV e a migração agregada. Nenhuma cédula individual é exibida.
 
-Na subida, o entrypoint roda `prisma migrate deploy` e inicia o servidor standalone.
+## Limites deste sigilo
 
-## Rotas
+O aplicativo não grava um vínculo entre o hash do e-mail e a cédula. Isso não é anonimato contra quem administra o banco.
 
-- `/` — landing do voto ranqueado, aviso LGPD/cookies, depois e-mail
-- `/acesso/[token]` — consome o link
-- `/votar` — urna ranqueada; exige a sessão do link de e-mail. Sem voto enviado, o mesmo e-mail pode pedir outro link depois que a sessão expira
-- `/resultado` — totais IRV (público, inclusive fora do BR)
-- `/bloqueado` — fora do Brasil
-- `POST /api/verificar`, `POST /api/voto`
+- Quem tem o segredo do servidor pode recalcular o HMAC de um e-mail conhecido e saber se aquele endereço já votou. Não há, no esquema, uma coluna que diga qual foi o ranking.
+- As duas linhas (participação e cédula) são escritas na mesma transação. O horário da participação é o instante exato; o da cédula é truncado à hora. Quem lê o banco ou os logs do banco pode tentar associar inserções próximas. O desenho reduz o vínculo no aplicativo; não o torna impossível para o operador.
+- O voto oficial é declaração da própria pessoa. Não há checagem com o TSE.
+- Provedor de e-mail, hospedagem e quem opera o servidor enxergam metadados de entrega e de acesso fora destas tabelas. O código não pede para registrar corpo de requisição, e-mail, token ou IP nos logs da aplicação.
 
-## Candidatos
+Nada disso é vendido ou compartilhado pelo aplicativo. O código-fonte está em [github.com/LordMendes/brazillian-ranked-vote-2026](https://github.com/LordMendes/brazillian-ranked-vote-2026).
 
-Lista do 1º turno TSE 2026 (13 nomes). O 1º turno oficial já ocorreu; o 2º turno oficial foi Lula (13) × Flávio Bolsonaro (22). A enquete mantém o campo completo do 1º turno.
+Fotos de urna: TSE (CC BY). O logotipo identifica a legenda e não é endosso.
