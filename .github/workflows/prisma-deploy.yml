@@ -21,6 +21,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Lockfile was written by npm 11.20. Node 22's bundled npm rejects its peer entries.
+      - run: npm install -g npm@11.20.0
       - uses: oven-sh/setup-bun@v2
       - uses: prisma/cloud-deploy-action@v1
         with:
