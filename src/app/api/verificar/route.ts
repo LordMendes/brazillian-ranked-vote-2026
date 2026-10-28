@@ -61,6 +61,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // Participation is recorded only when the ballot is stored. A used or
+    // expired link, with no vote, does not block another request.
     const emailHash = hashEmail(email);
     const already = await prisma.participanteVerificado.findUnique({
       where: { emailHash },

@@ -6,8 +6,11 @@ import { requireBrazilPage } from "@/lib/guards";
 import { hasConsent } from "@/lib/consent";
 import { isVotingOpen } from "@/lib/geo";
 import { getVoteSession } from "@/lib/session";
+import { voteAccess } from "@/lib/vote-access";
 import { prisma } from "@/lib/db";
 import { hashEmail } from "@/lib/crypto";
+
+export const dynamic = "force-dynamic";
 
 export default async function VotarPage() {
   await requireBrazilPage();
@@ -21,8 +24,14 @@ export default async function VotarPage() {
   }
 
   const session = await getVoteSession();
-  if (!session.email) {
-    redirect("/?erro=link");
+  const access = voteAccess(session);
+  if (access === "expired") {
+    session.destroy();
+    await session.save();
+    redirect("/?erro=sessao");
+  }
+  if (access !== "ok" || !session.email) {
+    redirect("/?erro=acesso");
   }
 
   const already = await prisma.participanteVerificado.findUnique({

@@ -1,5 +1,6 @@
 import { getIronSession, SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { VOTE_SESSION_SEC } from "./vote-access";
 
 export type VoteSession = {
   email?: string;
@@ -14,7 +15,7 @@ function sessionOptions(): SessionOptions {
   return {
     cookieName: "enquete_sessao",
     password,
-    ttl: 60 * 30, // 30 minutes
+    ttl: VOTE_SESSION_SEC,
     cookieOptions: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

@@ -18,11 +18,15 @@ function bannerFromParams(params: { erro?: string; encerrada?: string }): string
   }
   switch (params.erro) {
     case "ja_participou":
-      return "Este e-mail já registrou participação.";
+      return "Este e-mail já registrou um voto.";
     case "expirado":
       return "Este link expirou ou já foi usado. Solicite um novo.";
     case "link":
       return "Link inválido. Solicite um novo acesso.";
+    case "acesso":
+      return "Para votar, abra o link enviado ao seu e-mail.";
+    case "sessao":
+      return "A sessão expirou sem um voto. Solicite um novo link com o mesmo e-mail.";
     default:
       return null;
   }
@@ -46,8 +50,9 @@ export default async function HomePage({
             Participar da enquete
           </h2>
           <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            Uma participação por e-mail. O link de acesso vale 15 minutos e só
-            pode ser usado uma vez.
+            A urna abre só pelo link do e-mail. A sessão dura 30 minutos. Se
+            ela acabar antes do voto, peça outro link com o mesmo e-mail. O
+            endereço só fica impedido depois que o voto é enviado.
           </p>
         </div>
         <HomeClient banner={bannerFromParams(params)} votingOpen={isVotingOpen()} />

@@ -70,7 +70,7 @@ Na subida, o entrypoint roda `prisma migrate deploy` e inicia o servidor standal
 
 - `/` — landing do voto ranqueado, aviso LGPD/cookies, depois e-mail
 - `/acesso/[token]` — consome o link
-- `/votar` — urna ranqueada
+- `/votar` — urna ranqueada; exige a sessão do link de e-mail. Sem voto enviado, o mesmo e-mail pode pedir outro link depois que a sessão expira
 - `/resultado` — totais IRV (público, inclusive fora do BR)
 - `/bloqueado` — fora do Brasil
 - `POST /api/verificar`, `POST /api/voto`

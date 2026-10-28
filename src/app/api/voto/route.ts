@@ -11,6 +11,7 @@ import {
 import { rateLimit } from "@/lib/rate-limit";
 import { brazilApiGuard, consentApiGuard, votingClosedApiGuard } from "@/lib/guards";
 import { getVoteSession } from "@/lib/session";
+import { voteAccess } from "@/lib/vote-access";
 import { extractClientIp } from "@/lib/geo";
 import { headers } from "next/headers";
 
@@ -34,9 +35,19 @@ export async function POST(request: Request) {
     if (closed) return closed;
 
     const session = await getVoteSession();
-    if (!session.email) {
+    const access = voteAccess(session);
+    if (access !== "ok" || !session.email) {
+      if (access === "expired") {
+        session.destroy();
+        await session.save();
+      }
       return NextResponse.json(
-        { error: "Sessão inválida. Solicite um novo link de acesso." },
+        {
+          error:
+            access === "expired"
+              ? "A sessão expirou sem um voto. Solicite um novo link com o mesmo e-mail."
+              : "Para votar, abra o link enviado ao seu e-mail.",
+        },
         { status: 401 },
       );
     }

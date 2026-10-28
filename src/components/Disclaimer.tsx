@@ -33,8 +33,10 @@ export function Disclaimer({ onAccepted }: Props) {
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            O e-mail serve apenas como verificação de unicidade (uma participação
-            por endereço). O texto do e-mail não fica armazenado junto ao voto.
+            O e-mail serve apenas como verificação de unicidade (um voto por
+            endereço). Ele só é consumido quando o voto é enviado: se a sessão
+            acabar antes disso, o mesmo e-mail pode pedir outro link. O texto
+            do e-mail não fica armazenado junto ao voto.
           </li>
           <li>
             O ranking é gravado sem qualquer vínculo com a pessoa que votou. O
