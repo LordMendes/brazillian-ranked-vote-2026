@@ -1,11 +1,8 @@
 import { createHmac, createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
+import { serverSecret } from "./platform";
 
 function requireSecret(): string {
-  const secret = process.env.SERVER_SECRET;
-  if (!secret || secret.length < 32) {
-    throw new Error("SERVER_SECRET must be set and at least 32 characters");
-  }
-  return secret;
+  return serverSecret();
 }
 
 export function normalizeEmail(email: string): string {

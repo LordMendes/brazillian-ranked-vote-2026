@@ -1,5 +1,6 @@
 import geoip from "geoip-lite";
 import { headers } from "next/headers";
+import { allowNonBr, trustProxy, votingClosesAt } from "./platform";
 
 function isPrivateIp(ip: string): boolean {
   if (ip === "127.0.0.1" || ip === "::1" || ip === "localhost") return true;
@@ -11,8 +12,7 @@ function isPrivateIp(ip: string): boolean {
 }
 
 export function extractClientIp(headerMap: Headers): string | null {
-  const trustProxy = process.env.TRUST_PROXY === "true";
-  if (trustProxy) {
+  if (trustProxy()) {
     const xff = headerMap.get("x-forwarded-for");
     if (xff) {
       const first = xff.split(",")[0]?.trim();
@@ -28,7 +28,7 @@ export function countryFromIp(ip: string | null): string | null {
   if (!ip) return null;
   if (isPrivateIp(ip)) {
     // Local requests: treat as BR when ALLOW_NON_BR or in development
-    if (process.env.ALLOW_NON_BR === "true" || process.env.NODE_ENV !== "production") {
+    if (allowNonBr() || process.env.NODE_ENV !== "production") {
       return "BR";
     }
     return null;
@@ -41,7 +41,7 @@ export async function isBrazilAccessAllowed(): Promise<{
   allowed: boolean;
   country: string | null;
 }> {
-  if (process.env.ALLOW_NON_BR === "true") {
+  if (allowNonBr()) {
     return { allowed: true, country: "BYPASS" };
   }
 
@@ -52,7 +52,7 @@ export async function isBrazilAccessAllowed(): Promise<{
 }
 
 export function isVotingOpen(): boolean {
-  const closes = process.env.VOTING_CLOSES_AT;
+  const closes = votingClosesAt();
   if (!closes) return true;
   const at = Date.parse(closes);
   if (Number.isNaN(at)) return true;

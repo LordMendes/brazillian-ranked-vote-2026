@@ -1,5 +1,6 @@
 import { getIronSession, SessionOptions } from "iron-session";
 import { cookies } from "next/headers";
+import { secureCookies, serverSecret } from "./platform";
 import { VOTE_SESSION_SEC } from "./vote-access";
 
 export type VoteSession = {
@@ -8,17 +9,13 @@ export type VoteSession = {
 };
 
 function sessionOptions(): SessionOptions {
-  const password = process.env.SERVER_SECRET;
-  if (!password || password.length < 32) {
-    throw new Error("SERVER_SECRET must be set and at least 32 characters");
-  }
   return {
     cookieName: "enquete_sessao",
-    password,
+    password: serverSecret(),
     ttl: VOTE_SESSION_SEC,
     cookieOptions: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookies(),
       sameSite: "lax",
       path: "/",
     },

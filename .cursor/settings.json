@@ -2,6 +2,9 @@
   "plugins": {
     "resend": {
       "enabled": true
+    },
+    "prisma": {
+      "enabled": true
     }
   }
 }

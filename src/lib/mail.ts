@@ -1,12 +1,13 @@
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
+import { resendApiKey, resendFrom, useResend } from "./platform";
 
 const DEFAULT_FROM = "Enquete Ranqueada <acesso@tortrad.com.br>";
 const SUBJECT = "Seu link de acesso — Enquete de voto ranqueado 2026";
 
-/** Local `next dev` delivers to MailHog. The production image uses Resend. */
+/** Local `next dev` delivers to MailHog. Prisma Compute and production use Resend. */
 function usesMailhog(): boolean {
-  return process.env.NODE_ENV !== "production";
+  return !useResend();
 }
 
 function textBody(link: string): string {
@@ -54,7 +55,7 @@ async function sendViaMailhog(to: string, link: string): Promise<void> {
 
   try {
     await transport.sendMail({
-      from: process.env.RESEND_FROM || DEFAULT_FROM,
+      from: resendFrom(DEFAULT_FROM),
       to,
       subject: SUBJECT,
       text: textBody(link),
@@ -70,14 +71,14 @@ async function sendViaMailhog(to: string, link: string): Promise<void> {
 }
 
 async function sendViaResend(to: string, link: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = resendApiKey();
   if (!apiKey) {
     throw new Error("RESEND_API_KEY is required in production");
   }
 
   const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM || DEFAULT_FROM,
+    from: resendFrom(DEFAULT_FROM),
     to,
     subject: SUBJECT,
     text: textBody(link),

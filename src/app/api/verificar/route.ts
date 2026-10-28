@@ -13,6 +13,7 @@ import { sendMagicLink } from "@/lib/mail";
 import { rateLimit } from "@/lib/rate-limit";
 import { brazilApiGuard, consentApiGuard, votingClosedApiGuard } from "@/lib/guards";
 import { extractClientIp } from "@/lib/geo";
+import { appOrigin } from "@/lib/platform";
 import { headers } from "next/headers";
 
 const bodySchema = z.object({
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       expiresAt,
     });
 
-    const appUrl = (process.env.APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const appUrl = appOrigin();
     const link = `${appUrl}/acesso/${token}`;
 
     try {

@@ -3,12 +3,13 @@ import { db, timestampToDate } from "@/lib/db";
 import { decryptEmail, hashEmail, hashToken } from "@/lib/crypto";
 import { getVoteSession } from "@/lib/session";
 import { isBrazilAccessAllowed, isVotingOpen } from "@/lib/geo";
+import { appOrigin } from "@/lib/platform";
 
 type Params = { params: Promise<{ token: string }> };
 
 export async function GET(request: Request, { params }: Params) {
   const { allowed } = await isBrazilAccessAllowed();
-  const appUrl = (process.env.APP_URL || new URL(request.url).origin).replace(/\/$/, "");
+  const appUrl = appOrigin(new URL(request.url).origin);
 
   if (!allowed) {
     return NextResponse.redirect(`${appUrl}/bloqueado`);
