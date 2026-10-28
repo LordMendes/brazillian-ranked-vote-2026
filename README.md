@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Enquete de voto ranqueado — Presidência 2026
 
-## Getting Started
+Enquete cívica **não oficial** com voto ranqueado (IRV), autenticação por e-mail via magic link, unicidade por HMAC-SHA256 e voto anônimo desvinculado. Pronto para Docker Compose e Coolify.
 
-First, run the development server:
+## Privacidade
+
+- Tabela `participantes_verificados`: só o hash HMAC do e-mail (nunca o texto).
+- Tabela `votos_computados`: ranking (JSON), voto oficial autodeclarado do 1º e do 2º turno (opcional) e timestamp truncado à hora, com UUID aleatório.
+- Sem FK entre as duas tabelas.
+- Link mágico opaco (`/acesso/<token>`); o e-mail fica criptografado só enquanto o link é válido (15 min, uso único).
+- Corpo do voto: `{ ranking: string[], votoPrimeiroTurno?: string | null, votoSegundoTurno?: string | null }` — o e-mail fica na sessão httpOnly criptografada. O voto oficial é opcional (`branco`, `nulo`, `nao-votei`, id de candidato do 1º turno, ou `lula` / `flavio-bolsonaro` no 2º) e não entra na conta IRV. Serve para o agregado de migração.
+- IP usado só para checar país (BR), **não armazenado**.
+- Logs: não registre bodies, e-mails, tokens ou IPs. No Coolify/Traefik, desative log de request body e URLs completas com query/path sensível.
+
+## Stack
+
+- Next.js (App Router, TypeScript, `output: "standalone"`)
+- PostgreSQL 16 + Prisma
+- Nodemailer (SMTP)
+- `@hello-pangea/dnd` + botões sobe/desce
+- `geoip-lite` (lookup offline)
+
+## Desenvolvimento local
 
 ```bash
+cp .env.example .env
+# Ajuste SERVER_SECRET (32+ chars). Localmente o Postgres do compose usa a porta 15432.
+
+docker compose up -d postgres mailhog
+npm install
+npx prisma migrate deploy
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Com `ALLOW_NON_BR=true` (padrão no `.env.example`), a checagem de país é ignorada.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**E-mail local:** MailHog captura os magic links. Abra a UI em [http://localhost:18025](http://localhost:18025). SMTP no host: `localhost:11025` (já no `.env.example`). No serviço `app` do Compose, o host interno continua `mailhog:1025`. Sem `SMTP_HOST`, o link só é impresso no console.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+## Docker / Coolify
 
-To learn more about Next.js, take a look at the following resources:
+Deploy type: **Docker Compose**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Variáveis obrigatórias:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variável | Descrição |
+| --- | --- |
+| `DATABASE_URL` | Postgres |
+| `SERVER_SECRET` | ≥ 32 caracteres (HMAC, criptografia, sessão) |
+| `APP_URL` | URL pública (ex.: `https://enquete.seudominio.com`) |
+| `TRUST_PROXY` | `true` no Coolify (Traefik) |
 
-## Deploy on Vercel
+Opcionais: `SMTP_*`, `VOTING_CLOSES_AT`, `ALLOW_NON_BR` (**não** definir em produção).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Se o Coolify já gerencia o Postgres, aponte `DATABASE_URL` para ele e pode publicar só o serviço `app` (ou use o compose completo).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker compose up --build
+```
+
+Na subida, o entrypoint roda `prisma migrate deploy` e inicia o servidor standalone.
+
+## Rotas
+
+- `/` — landing do voto ranqueado, aviso LGPD/cookies, depois e-mail
+- `/acesso/[token]` — consome o link
+- `/votar` — urna ranqueada
+- `/resultado` — totais IRV (público, inclusive fora do BR)
+- `/bloqueado` — fora do Brasil
+- `POST /api/verificar`, `POST /api/voto`
+
+## Candidatos
+
+Lista do 1º turno TSE 2026 (13 nomes). O 1º turno oficial já ocorreu; o 2º turno oficial foi Lula (13) × Flávio Bolsonaro (22). A enquete mantém o campo completo do 1º turno.

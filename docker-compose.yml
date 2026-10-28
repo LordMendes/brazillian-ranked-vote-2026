@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_USER: ranked
+      POSTGRES_PASSWORD: ranked
+      POSTGRES_DB: ranked_choice
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ranked -d ranked_choice"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    restart: unless-stopped
+    ports:
+      # Host ports avoid clash with other local MailHog instances on 1025/8025
+      - "11025:1025"
+      - "18025:8025"
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://ranked:ranked@postgres:5432/ranked_choice?schema=public
+      SERVER_SECRET: ${SERVER_SECRET:?set SERVER_SECRET}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      ALLOW_NON_BR: ${ALLOW_NON_BR:-}
+      VOTING_CLOSES_AT: ${VOTING_CLOSES_AT:-}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-Enquete Ranqueada <noreply@ranked.local>}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+
+volumes:
+  postgres_data:

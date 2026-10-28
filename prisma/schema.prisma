@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ParticipanteVerificado {
+  id               String   @id @default(uuid()) @db.Uuid
+  emailHash        String   @unique @map("email_hash")
+  dataVerificacao  DateTime @default(now()) @map("data_verificacao")
+
+  @@map("participantes_verificados")
+}
+
+model VotoComputado {
+  id                  String   @id @default(uuid()) @db.Uuid
+  ranking             Json
+  dataSubmissao       DateTime @map("data_submissao")
+  /// Self-reported official vote. Null when the voter skipped the optional field.
+  votoPrimeiroTurno   String?  @map("voto_primeiro_turno")
+  votoSegundoTurno    String?  @map("voto_segundo_turno")
+
+  @@map("votos_computados")
+}
+
+model AcessoPendente {
+  id              String   @id @default(uuid()) @db.Uuid
+  tokenHash       String   @unique @map("token_hash")
+  emailEncrypted  String   @map("email_encrypted")
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("acessos_pendentes")
+}

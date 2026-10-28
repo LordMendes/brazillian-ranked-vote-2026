@@ -1,0 +1,10 @@
+export function SiteFooter() {
+  return (
+    <footer className="mt-auto border-t border-zinc-200 py-6 text-center text-xs text-zinc-500 dark:border-zinc-800">
+      <p>
+        Enquete cívica não oficial · não é a urna do TSE · voto anônimo e
+        desvinculado do e-mail
+      </p>
+    </footer>
+  );
+}
