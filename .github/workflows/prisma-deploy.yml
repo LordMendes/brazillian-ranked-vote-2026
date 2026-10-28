@@ -24,7 +24,8 @@ jobs:
       # Lockfile was written by npm 11.20. Node 22's bundled npm rejects its peer entries.
       - run: npm install -g npm@11.20.0
       - uses: oven-sh/setup-bun@v2
-      - uses: prisma/cloud-deploy-action@v1
+      # v1 still runs `prisma deploy module.ts`. Prisma 8.0.0-rc.28 only accepts `--entry`.
+      - uses: prisma/cloud-deploy-action@20fa45c8e277e1b430f911312269d9b4b27f5cac
         with:
           build-command: npm run build
         env:
