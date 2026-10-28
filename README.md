@@ -31,7 +31,7 @@ O acesso à cédula exige um link enviado por e-mail. O link vale 15 minutos e �
 
 A unicidade é por endereço, não por título de eleitor. O sistema não confirma que a pessoa votou na eleição oficial nem que o e-mail pertence a um eleitor. Aliases com `+` são ignorados; no Gmail, pontos no nome e o domínio `googlemail.com` contam como o mesmo endereço.
 
-Em produção, a página só abre para acessos cujo IP o lookup offline classifica como Brasil. O IP não é gravado com o voto. Há limite de tentativas por IP e por e-mail para reduzir abuso; esse controle fica em memória do processo e expira.
+Em produção, a página só abre para acessos cujo país o navegador classifica como Brasil (lookup do IP público da conexão do visitante, não do servidor). O IP não é gravado com o voto. Há limite de tentativas por IP e por e-mail para reduzir abuso; esse controle fica em memória do processo e expira.
 
 ## O que fica gravado
 

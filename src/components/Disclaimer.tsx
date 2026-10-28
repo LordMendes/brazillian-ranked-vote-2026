@@ -45,8 +45,9 @@ export function Disclaimer({ onAccepted }: Props) {
             de migração.
           </li>
           <li>
-            O endereço IP é consultado apenas para verificar se o acesso parte do
-            Brasil e <strong>não é armazenado</strong>.
+            O país da conexão é verificado no seu navegador, a partir do IP
+            público da sua conexão — não do servidor. O IP{" "}
+            <strong>não é armazenado</strong>.
           </li>
           <li>
             Usamos apenas cookies essenciais: o registro do seu consentimento e a

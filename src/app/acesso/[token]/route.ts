@@ -2,18 +2,13 @@ import { NextResponse } from "next/server";
 import { db, timestampToDate } from "@/lib/db";
 import { decryptEmail, hashEmail, hashToken } from "@/lib/crypto";
 import { getVoteSession } from "@/lib/session";
-import { isBrazilAccessAllowed, isVotingOpen } from "@/lib/geo";
+import { isVotingOpen } from "@/lib/geo";
 import { appOrigin } from "@/lib/platform";
 
 type Params = { params: Promise<{ token: string }> };
 
 export async function GET(request: Request, { params }: Params) {
-  const { allowed } = await isBrazilAccessAllowed();
   const appUrl = appOrigin(new URL(request.url).origin);
-
-  if (!allowed) {
-    return NextResponse.redirect(`${appUrl}/bloqueado`);
-  }
 
   if (!isVotingOpen()) {
     return NextResponse.redirect(`${appUrl}/?encerrada=1`);

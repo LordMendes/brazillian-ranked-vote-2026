@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RecheckBrazilAccess } from "@/components/RecheckBrazilAccess";
 
 export default function BloqueadoPage() {
   return (
@@ -8,9 +9,10 @@ export default function BloqueadoPage() {
       </h1>
       <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
         A participação nesta enquete só é permitida a partir de conexões no
-        Brasil. O IP é verificado localmente e não é armazenado. O resultado
-        agregado permanece público.
+        Brasil. O país é verificado no seu navegador e o IP não é armazenado. O
+        resultado agregado permanece público.
       </p>
+      <RecheckBrazilAccess />
       <Link
         href="/resultado"
         className="inline-block rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"

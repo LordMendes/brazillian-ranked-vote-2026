@@ -1,12 +1,7 @@
-import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { hasConsent } from "./consent";
 import { isBrazilAccessAllowed, isVotingOpen } from "./geo";
 
-export async function requireBrazilPage() {
-  const { allowed } = await isBrazilAccessAllowed();
-  if (!allowed) redirect("/bloqueado");
-}
 
 export async function brazilApiGuard(): Promise<NextResponse | null> {
   const { allowed } = await isBrazilAccessAllowed();

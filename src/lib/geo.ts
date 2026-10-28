@@ -1,5 +1,6 @@
 import geoip from "geoip-lite";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { GEO_COOKIE, hasValidGeoAccess } from "./geo-access";
 import { allowNonBr, trustProxy, votingClosesAt } from "./platform";
 
 function isPrivateIp(ip: string): boolean {
@@ -11,23 +12,47 @@ function isPrivateIp(ip: string): boolean {
   return false;
 }
 
-export function extractClientIp(headerMap: Headers): string | null {
-  if (trustProxy()) {
-    const xff = headerMap.get("x-forwarded-for");
-    if (xff) {
-      const first = xff.split(",")[0]?.trim();
-      if (first) return first.replace(/^::ffff:/, "");
-    }
-    const realIp = headerMap.get("x-real-ip")?.trim();
-    if (realIp) return realIp.replace(/^::ffff:/, "");
+function normalizeIp(value: string): string {
+  return value.trim().replace(/^::ffff:/, "");
+}
+
+function firstIpFromHeader(value: string): { publicIp: string | null; fallback: string | null } {
+  let fallback: string | null = null;
+  for (const part of value.split(",")) {
+    const ip = normalizeIp(part);
+    if (!ip) continue;
+    if (!fallback) fallback = ip;
+    if (!isPrivateIp(ip)) return { publicIp: ip, fallback };
   }
-  return null;
+  return { publicIp: null, fallback };
+}
+
+const CLIENT_IP_HEADERS = [
+  "cf-connecting-ip",
+  "true-client-ip",
+  "x-real-ip",
+  "x-client-ip",
+  "fly-client-ip",
+  "x-forwarded-for",
+];
+
+export function extractClientIp(headerMap: Headers): string | null {
+  if (!trustProxy()) return null;
+
+  let fallback: string | null = null;
+  for (const name of CLIENT_IP_HEADERS) {
+    const raw = headerMap.get(name);
+    if (!raw) continue;
+    const found = firstIpFromHeader(raw);
+    if (found.publicIp) return found.publicIp;
+    if (!fallback && found.fallback) fallback = found.fallback;
+  }
+  return fallback;
 }
 
 export function countryFromIp(ip: string | null): string | null {
   if (!ip) return null;
   if (isPrivateIp(ip)) {
-    // Local requests: treat as BR when ALLOW_NON_BR or in development
     if (allowNonBr() || process.env.NODE_ENV !== "production") {
       return "BR";
     }
@@ -45,10 +70,20 @@ export async function isBrazilAccessAllowed(): Promise<{
     return { allowed: true, country: "BYPASS" };
   }
 
+  const cookieStore = await cookies();
+  if (hasValidGeoAccess(cookieStore.get(GEO_COOKIE)?.value)) {
+    return { allowed: true, country: "BR" };
+  }
+
   const headerStore = await headers();
   const ip = extractClientIp(headerStore);
   const country = countryFromIp(ip);
-  return { allowed: country === "BR", country };
+  // Host/proxy IPs (Prisma ewr, private hops) are not the visitor. Only a
+  // positive BR match from a public client IP is trusted here.
+  if (country === "BR") {
+    return { allowed: true, country };
+  }
+  return { allowed: false, country };
 }
 
 export function isVotingOpen(): boolean {
